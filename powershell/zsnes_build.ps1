@@ -1,3 +1,4 @@
+# better version now provided at https://github.com/Atari2/fusoya_zsnes_build
 try {
     $vsPath = &"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationpath
     Import-Module (Get-ChildItem $vsPath -Recurse -File -Filter Microsoft.VisualStudio.DevShell.dll).FullName
@@ -82,6 +83,7 @@ if ((Test-Path -Path $libpath) -and (Test-Path -Path $includepath) -and (Test-Pa
     # just rebuild zsnes
     Set-Location .\zsnes_1_51\src
     $env:PATH = "$env:PATH;$currentdir/libs/bin"
+    $env:NASMENV = "-w-orphan-labels -w-pp-macro-params-legacy"
     make -f makefile.ms PLATFORM=msvc LIB_INCLUDE_DIR=$includepath LIB_LIBRARY_DIR=$libpath
     Copy-Item .\zsnesw.exe "$currentdir/zsnesw.exe"
     Set-Location $currentdir
@@ -107,7 +109,7 @@ Remove-Item -Path zlib-1.2.12 -Recurse -Force
 
 # libpng
 Invoke-WebRequest -UserAgent "Wget" -Uri "https://downloads.sourceforge.net/project/libpng/libpng16/1.6.37/lpng1637.zip" -OutFile "libpng.zip"
-unzip libpng.zip
+Expand-Archive -Path libpng.zip -DestinationPath $pwd
 Set-Location .\lpng1637
 mkdir build
 Set-Location .\build
@@ -120,7 +122,7 @@ Remove-Item -Path lpng1637 -Recurse -Force
 
 # pdcurses
 Invoke-WebRequest -Uri "https://github.com/wmcbrine/PDCurses/archive/refs/tags/3.9.zip" -OutFile "pdcurses.zip"
-unzip pdcurses.zip
+Expand-Archive -Path pdcurses.zip -DestinationPath $pwd
 Set-Location .\PDCurses-3.9\wincon
 nmake /f Makefile.vc
 Copy-Item .\pdcurses.lib "$currentdir/libs/lib/pdcurses.lib"
@@ -131,18 +133,19 @@ Remove-Item -Path .\PDCurses-3.9 -Recurse -Force
 
 # zsnes
 Invoke-WebRequest -Uri "https://fusoya.eludevisibility.org/emulator/download/zsnesw151-FuSoYa-8MB_R2src.zip" -OutFile "zsnes.zip"
-unzip zsnes.zip
+Expand-Archive -Path zsnes.zip -DestinationPath $pwd
 Remove-Item zsnes.zip
 $patchstring | Out-File ".\zsnes_makefile.patch" 
 git apply zsnes_makefile.patch
 Set-Location .\zsnes_1_51\src
 
 $env:PATH = "$env:PATH;$currentdir/libs/bin"
+$env:NASMENV = "-w-orphan-labels -w-pp-macro-params-legacy"
 make -f makefile.ms PLATFORM=msvc LIB_INCLUDE_DIR=$includepath LIB_LIBRARY_DIR=$libpath
 Copy-Item .\zsnesw.exe "$currentdir/zsnesw.exe"
 Set-Location $currentdir
 Remove-Item .\zsnes_makefile.patch
-Copy-Item .\libs\bin\zlib1.dll "$currentdir/zlib1.dll"
+Copy-Item .\libs\bin\zlib.dll "$currentdir/zlib.dll"
 Copy-Item .\libs\bin\libpng16.dll "$currentdir/libpng16.dll"
 
 Write-Output "Done"
