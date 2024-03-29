@@ -63,17 +63,43 @@ $modulesToSkip = @(
     '-skip', 'qt3d',
     '-skip', 'qtcharts',
     '-skip', 'qtdatavis3d',
-    '-skip', 'qtspeech'
+    '-skip', 'qtspeech',
+    '-skip', 'qtgraphs'
 )
-Push-Location
-Set-Location C:\Qt\$qtVersion\Src
-LoadVsDevShell
-Set-Variable -Name _ROOT -Value "C:\Qt\$qtVersion\Src"
-$env:PATH += ";$_ROOT\qtbase\bin";
-Set-Variable -Name _ROOT -Value ""
-.\configure -prefix "$qtInstallDir" -nomake examples -nomake tests $modulesToSkip -release -static
-cmake --build . --parallel
-cmake --install .
-cmake --build . --target clean
-Get-ChildItem -Filter "CMakeFiles" -Recurse -Directory | Remove-Item -Recurse -Force
-Pop-Location
+
+function BuildWindows {
+    Push-Location
+    Set-Location C:\Qt\$qtVersion\Src
+    LoadVsDevShell
+    Set-Variable -Name _ROOT -Value "C:\Qt\$qtVersion\Src"
+    $env:PATH += ";$_ROOT\qtbase\bin";
+    Set-Variable -Name _ROOT -Value ""
+    .\configure -prefix "$qtInstallDir" -nomake examples -nomake tests $modulesToSkip -release -static
+    cmake --build . --parallel
+    cmake --install .
+    cmake --build . --target clean
+    Get-ChildItem -Filter "CMakeFiles" -Recurse -Directory | Remove-Item -Recurse -Force
+    Pop-Location
+}
+
+function BuildUnix {
+    Push-Location
+    Set-Location ~/Qt/$qtVersion/Src
+    Set-Variable -Name _ROOT -Value "~/Qt/$qtVersion/Src"
+    $env:PATH += ";$_ROOT\qtbase\bin";
+    Set-Variable -Name _ROOT -Value ""
+    $env:CC = "clang"
+    $env:CXX = "clang++"
+    .\configure -prefix "$qtInstallDir" -nomake examples -nomake tests $modulesToSkip -release -static
+    cmake --build . --parallel
+    cmake --install .
+    cmake --build . --target clean
+    Get-ChildItem -Filter "CMakeFiles" -Recurse -Directory | Remove-Item -Recurse -Force
+    Pop-Location
+}
+
+if ($PSVersionTable.Platform -eq "Unix") {
+    BuildUnix
+} else {
+    BuildWindows
+}
