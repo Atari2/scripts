@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
-if [[ -z "$QMAKE" ]]; then
-    echo "QMAKE not set, please set it to the path of the qmake executable"
+if [[ -z "$QT_DIR" ]]; then
+    echo "QT_DIR not set, please set it to the path of Qt installation, e.g. /home/user/Qt/6.6.3/gcc_64"
     exit 1
 fi
+
+QMAKE=$QT_DIR/bin/qmake
+export QMAKE
 
 # clone repo
 git clone https://github.com/Atari2/CFGEditorPlusPlus
@@ -19,7 +22,7 @@ wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/1-al
 chmod a+x linuxdeploy-plugin-qt-x86_64.AppImage
 
 # build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/home/alessio/Qt/6.6.3/gcc_64 -DCMAKE_INSTALL_PREFIX=
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$QT_DIR" -DCMAKE_INSTALL_PREFIX=
 cmake --build . --parallel
 make install DESTDIR="$(pwd)/AppDir"
 cd AppDir || exit
